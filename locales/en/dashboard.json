@@ -16,7 +16,7 @@
   },
   "quick_actions": {
     "voice": "Ask by Voice",
-    "pest": "Pest ID",
+    "pest": "Pest Health",
     "schemes": "Schemes"
   },
   "schemes_card": { "title": "Government Schemes" },

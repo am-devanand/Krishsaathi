@@ -21,6 +21,16 @@
     return LANGUAGE_CODES.includes(lang) ? lang : null;
   }
 
+  function getFarmerLanguage() {
+    try {
+      const u = typeof window !== 'undefined' && window.currentUser;
+      const lang = u && u.language && LANGUAGE_CODES.includes(u.language) ? u.language : null;
+      return lang;
+    } catch (e) {
+      return null;
+    }
+  }
+
   function getStoredLanguage() {
     try {
       const stored = localStorage.getItem('userLanguage');
@@ -55,25 +65,18 @@
 
   function initializeLanguage(i18n) {
     const urlLang = getUrlLanguage();
-    if (urlLang) {
-      i18n.setLanguage(urlLang);
-      return;
-    }
+    if (urlLang) return i18n.setLanguage(urlLang);
+    const farmerLang = getFarmerLanguage();
+    if (farmerLang) return i18n.setLanguage(farmerLang);
     const storedLang = getStoredLanguage();
-    if (storedLang) {
-      i18n.setLanguage(storedLang);
-      return;
-    }
+    if (storedLang) return i18n.setLanguage(storedLang);
     const browserLang = getBrowserLanguage();
-    if (browserLang) {
-      i18n.setLanguage(browserLang);
-      return;
-    }
-    detectLanguageByLocation().then(function (lang) {
-      if (lang) i18n.setLanguage(lang);
-      else i18n.setLanguage(DEFAULT_LANGUAGE);
+    if (browserLang) return i18n.setLanguage(browserLang);
+    return detectLanguageByLocation().then(function (lang) {
+      return i18n.setLanguage(lang || DEFAULT_LANGUAGE);
+    }).catch(function () {
+      return i18n.setLanguage(DEFAULT_LANGUAGE);
     });
-    i18n.setLanguage(DEFAULT_LANGUAGE);
   }
 
   if (typeof window !== 'undefined') {

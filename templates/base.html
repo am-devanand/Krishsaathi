@@ -17,11 +17,25 @@
     <nav class="app-header__nav">
       <a href="{{ url_for('index') }}" data-i18n="navigation.home" data-i18n-module="common">Home</a>
       <a href="{{ url_for('dashboard') }}" data-i18n="navigation.analytics" data-i18n-module="common">Analytics</a>
-      <a href="{{ url_for('chatbot_page') }}" data-i18n="navigation.pest_doctor" data-i18n-module="common">Pest Doctor</a>
+      <a href="{{ url_for('chatbot_page') }}" data-i18n="navigation.pest_health" data-i18n-module="common">Pest Health</a>
+      {% if current_farmer %}
+      <a href="{{ url_for('profile') }}" data-i18n="navigation.profile" data-i18n-module="common">Profile</a>
+      <a href="{{ url_for('logout') }}" data-i18n="navigation.logout" data-i18n-module="common">Logout</a>
+      {% else %}
+      <a href="{{ url_for('login') }}" data-i18n="navigation.login" data-i18n-module="common">Login</a>
+      {% endif %}
     </nav>
   </header>
 
   <div class="language-toggle" aria-label="Language selector"></div>
+  <script>
+    window.currentUser = {% if current_farmer %}{
+      name: {{ (current_farmer.name or '')|tojson }},
+      language: {{ (current_farmer.language_code or 'hi')|tojson }},
+      district: {{ (current_farmer.district or '')|tojson }},
+      village: {{ (current_farmer.village or '')|tojson }}
+    }{% else %}null{% endif %};
+  </script>
 
   <main class="main">
     {% block content %}{% endblock %}
@@ -37,14 +51,21 @@
   <script src="{{ url_for('static', filename='js/language-toggle.js') }}"></script>
   <script>
     (function() {
+      function whenReady() {
+        if (window.i18n) window.i18n.applyTranslations();
+        if (window.i18n && window.LocaleFormatter) {
+          window.formatter = new LocaleFormatter(window.i18n.getCurrentLanguage());
+        }
+      }
       if (window.initializeLanguage && window.i18n) {
-        window.initializeLanguage(window.i18n);
-      }
-      if (window.i18n) {
-        window.i18n.applyTranslations();
-      }
-      if (window.i18n && window.LocaleFormatter) {
-        window.formatter = new LocaleFormatter(window.i18n.getCurrentLanguage());
+        var p = window.initializeLanguage(window.i18n);
+        if (p && typeof p.then === 'function') {
+          p.then(whenReady).catch(whenReady);
+        } else {
+          whenReady();
+        }
+      } else {
+        whenReady();
       }
       window.addEventListener('languageChanged', function(e) {
         if (window.LocaleFormatter) {

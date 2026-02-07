@@ -8,9 +8,10 @@
   var recognition = null;
   var synthesis = window.speechSynthesis;
 
+  // Single source: match chatbot and UI – prefer logged-in farmer language, then i18n
   function getVoiceLang() {
-    var lang = (window.i18n && window.i18n.getCurrentLanguage()) ? window.i18n.getCurrentLanguage() : 'hi';
-    return (window.VOICE_LANGUAGE_CODES && window.VOICE_LANGUAGE_CODES[lang]) ? window.VOICE_LANGUAGE_CODES[lang] : 'hi-IN';
+    var lang = (window.currentUser && window.currentUser.language) || (window.i18n && window.i18n.getCurrentLanguage()) || 'hi';
+    return (window.VOICE_LANGUAGE_CODES && window.VOICE_LANGUAGE_CODES[lang]) ? window.VOICE_LANGUAGE_CODES[lang] : lang + '-IN';
   }
 
   function initRecognition() {

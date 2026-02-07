@@ -5,8 +5,28 @@
     "home": "होम",
     "voice": "बोलें",
     "pest_doctor": "कीट डॉक्टर",
+    "pest_health": "कीट स्वास्थ्य",
     "analytics": "विश्लेषण",
-    "profile": "प्रोफाइल"
+    "profile": "प्रोफाइल",
+    "login": "लॉगिन",
+    "logout": "लॉगआउट"
+  },
+  "login_form": {
+    "title": "लॉगिन",
+    "name_label": "किसान का नाम",
+    "mobile_label": "मोबाइल नंबर",
+    "submit": "लॉगिन"
+  },
+  "profile_form": {
+    "title": "आपका प्रोफाइल",
+    "language_label": "भाषा",
+    "state_label": "राज्य",
+    "district_label": "जिला",
+    "village_label": "गाँव (वैकल्पिक)",
+    "crop_label": "फसल",
+    "stage_label": "अवस्था",
+    "season_label": "मौसम",
+    "save": "प्रोफाइल सहेजें"
   },
   "buttons": {
     "start": "शुरू करें",

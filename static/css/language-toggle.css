@@ -1,10 +1,11 @@
 /* KrishiNirnay AI - Language Toggle (top-right, pill, dropdown) */
 
+/* z-index below nav so dropdown doesn't cover Profile/Logout; nav has margin-right on desktop for spacing */
 .language-toggle {
   position: fixed;
   top: 24px;
   right: 24px;
-  z-index: 1000;
+  z-index: 99;
 }
 
 .language-toggle__btn {

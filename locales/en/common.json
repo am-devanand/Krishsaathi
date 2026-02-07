@@ -5,8 +5,28 @@
     "home": "Home",
     "voice": "Voice",
     "pest_doctor": "Pest Doctor",
+    "pest_health": "Pest Health",
     "analytics": "Analytics",
-    "profile": "Profile"
+    "profile": "Profile",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "login_form": {
+    "title": "Login",
+    "name_label": "Farmer Name",
+    "mobile_label": "Mobile Number",
+    "submit": "Login"
+  },
+  "profile_form": {
+    "title": "Your Profile",
+    "language_label": "Language",
+    "state_label": "State",
+    "district_label": "District",
+    "village_label": "Village (optional)",
+    "crop_label": "Crop",
+    "stage_label": "Stage",
+    "season_label": "Season",
+    "save": "Save Profile"
   },
   "buttons": {
     "start": "Start",

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="page-title" data-i18n="profile_form.title" data-i18n-module="common">Your Profile</h1>
+<p data-i18n="profile_form.language_label" data-i18n-module="common" style="margin-bottom: 0.5rem;">Select your language, district, and crop details so we can show relevant advisory.</p>
+<p style="margin-bottom: 1rem;"><a href="{{ url_for('logout') }}" class="btn btn--secondary" data-i18n="navigation.logout" data-i18n-module="common">Logout</a></p>
+<form method="post" action="{{ url_for('profile') }}" class="profile-form">
+  <div class="card" style="margin-bottom: 1rem;">
+    <label for="profile-language" data-i18n="profile_form.language_label" data-i18n-module="common">Language</label>
+    <select id="profile-language" name="language_code" required style="width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #e0e0e0; border-radius: 8px;">
+      {% for code, native, name, _ in supported_languages %}
+      <option value="{{ code }}" {% if farmer.language_code == code %}selected{% endif %}>{{ native }} ({{ name }})</option>
+      {% endfor %}
+    </select>
+    <label for="profile-state" data-i18n="profile_form.state_label" data-i18n-module="common">State</label>
+    <select id="profile-state" name="state" style="width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #e0e0e0; border-radius: 8px;">
+      <option value="">-- Select --</option>
+      {% for code, name in states %}
+      <option value="{{ code }}" {% if farmer.state == code %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+    <label for="profile-district" data-i18n="profile_form.district_label" data-i18n-module="common">District</label>
+    <input type="text" id="profile-district" name="district" value="{{ farmer.district or '' }}" maxlength="80" placeholder="District name (manual entry; GPS can be used when available)" style="width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #e0e0e0; border-radius: 8px;" />
+    <label for="profile-village" data-i18n="profile_form.village_label" data-i18n-module="common">Village (optional)</label>
+    <input type="text" id="profile-village" name="village" value="{{ farmer.village or '' }}" maxlength="80" placeholder="Village" style="width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #e0e0e0; border-radius: 8px;" />
+  </div>
+  <div class="card" style="margin-bottom: 1rem;">
+    <p data-i18n="profile_form.crop_label" data-i18n-module="common" style="margin-top: 0; font-weight: 600;">Crop details</p>
+    <p style="font-size: 0.9rem; color: #757575;">Add at least one crop (type, stage, season).</p>
+    {% set farmer_crops = farmer.crops or [] %}
+    {% for i in range(3) %}
+    <div class="profile-crop-row" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: flex-end;">
+      <div style="flex: 1; min-width: 100px;">
+        <label style="font-size: 12px;">Crop</label>
+        <select name="crop_type" style="width: 100%; padding: 8px; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <option value="">-- Select --</option>
+          {% for ct in crop_types %}
+          <option value="{{ ct }}" {% if farmer_crops[i] and farmer_crops[i].crop_type == ct %}selected{% endif %}>{{ ct }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex: 1; min-width: 100px;">
+        <label style="font-size: 12px;">Stage</label>
+        <select name="stage" style="width: 100%; padding: 8px; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <option value="">--</option>
+          {% for st in crop_stages %}
+          <option value="{{ st }}" {% if farmer_crops[i] and farmer_crops[i].stage == st %}selected{% endif %}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="flex: 1; min-width: 80px;">
+        <label style="font-size: 12px;">Season</label>
+        <select name="season" style="width: 100%; padding: 8px; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <option value="">--</option>
+          {% for se in seasons %}
+          <option value="{{ se }}" {% if farmer_crops[i] and farmer_crops[i].season == se %}selected{% endif %}>{{ se }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <button type="submit" class="btn btn--primary" data-i18n="profile_form.save" data-i18n-module="common">Save Profile</button>
+</form>
+{% endblock %}

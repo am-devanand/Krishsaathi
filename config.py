@@ -60,3 +60,27 @@ LOCALES_DIR = BASE_DIR / 'locales'
 # Flask
 SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-change-in-production')
 DEBUG = os.environ.get('FLASK_DEBUG', '1') == '1'
+PERMANENT_SESSION_LIFETIME = 86400 * 30  # 30 days (sessions persist after app closed)
+
+# SQL database (SQLite by default; use DATABASE_URL for PostgreSQL in production)
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///krishsaathi.db')
+if DATABASE_URL.startswith('postgres://'):
+    DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+SQLALCHEMY_DATABASE_URI = DATABASE_URL
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+# Indian states (code, name) for profile - major agricultural states
+INDIAN_STATES = [
+    ('AP', 'Andhra Pradesh'), ('TG', 'Telangana'), ('KA', 'Karnataka'), ('TN', 'Tamil Nadu'),
+    ('KL', 'Kerala'), ('MH', 'Maharashtra'), ('GJ', 'Gujarat'), ('RJ', 'Rajasthan'),
+    ('MP', 'Madhya Pradesh'), ('UP', 'Uttar Pradesh'), ('WB', 'West Bengal'), ('BH', 'Bihar'),
+    ('PB', 'Punjab'), ('HR', 'Haryana'), ('OR', 'Odisha'), ('AS', 'Assam'), ('MN', 'Manipur'),
+]
+
+# Major Indian crops for profile
+CROP_TYPES = [
+    'paddy', 'wheat', 'cotton', 'sugarcane', 'maize', 'millets', 'pulses', 'oilseeds',
+    'soybean', 'groundnut', 'chickpea', 'sorghum', 'bajra', 'jowar',
+]
+CROP_STAGES = ['sowing', 'vegetative', 'flowering', 'harvesting', 'post_harvest']
+SEASONS = ['kharif', 'rabi', 'zaid', 'year_round']

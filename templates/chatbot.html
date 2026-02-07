@@ -1,96 +1,181 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="page-title" data-i18n="navigation.pest_doctor" data-i18n-module="common">Pest Doctor</h1>
-<div class="card" id="chatbot-card">
-  <div id="chatbot-messages">
-    <p class="chatbot-bot" data-i18n="greeting" data-i18n-module="chatbot">Hello! How can I help with your crop?</p>
+<h1 class="page-title" data-i18n="navigation.pest_health" data-i18n-module="common">Pest Health</h1>
+<div class="card chatbot-card" id="chatbot-card">
+  <div id="chatbot-messages" class="chatbot-messages">
+    <p class="chatbot-bot" data-i18n="greeting" data-i18n-module="chatbot">Hello! I'm Pest Health. Send a photo or ask about crops and pests.</p>
   </div>
   <div class="chatbot-input-wrap">
-    <input type="text" id="chatbot-input" data-i18n-placeholder="placeholders.type_message" placeholder="Type message..." />
-    <button type="button" class="btn btn--primary" id="chatbot-send" data-i18n="buttons.submit" data-i18n-module="common">Submit</button>
+    <div class="chatbot-input-row">
+      <input type="text" id="chatbot-input" class="chatbot-input" data-i18n-placeholder="placeholders.type_message" placeholder="Type message..." />
+      <input type="file" id="chatbot-image-input" class="chatbot-file-input" accept="image/*" aria-label="Attach image" />
+      <button type="button" class="btn btn--secondary chatbot-attach-btn" id="chatbot-attach" data-i18n="attach_image" data-i18n-module="chatbot" title="Attach image">Attach image</button>
+      <button type="button" class="btn btn--primary" id="chatbot-send" data-i18n="buttons.submit" data-i18n-module="common">Send</button>
+    </div>
+    <div id="chatbot-image-preview" class="chatbot-image-preview" aria-live="polite"></div>
   </div>
 </div>
 <style>
+  .chatbot-card { display: flex; flex-direction: column; min-height: 320px; }
+  .chatbot-messages { flex: 1; overflow-y: auto; max-height: 60vh; margin-bottom: 16px; }
   .chatbot-bot { margin: 0 0 8px 0; padding: 10px; background: #e8f5e9; border-radius: 8px; }
   .chatbot-user { margin: 0 0 8px 0; padding: 10px; background: #e3f2fd; border-radius: 8px; text-align: right; }
-  .chatbot-input-wrap { display: flex; gap: 8px; margin-top: 16px; }
-  #chatbot-input { flex: 1; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
+  .chatbot-user-image { max-width: 120px; max-height: 120px; border-radius: 8px; margin-top: 4px; }
+  .chatbot-input-wrap { display: flex; flex-direction: column; gap: 8px; }
+  .chatbot-input-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .chatbot-input { flex: 1; min-width: 160px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
+  .chatbot-file-input { position: absolute; width: 0; height: 0; opacity: 0; }
+  .chatbot-attach-btn { white-space: nowrap; }
+  .chatbot-image-preview { min-height: 0; font-size: 12px; color: var(--color-text-muted, #757575); }
 </style>
 {% endblock %}
 {% block scripts %}
 <script>
-  (function() {
-    var input = document.getElementById('chatbot-input');
-    var send = document.getElementById('chatbot-send');
-    var messages = document.getElementById('chatbot-messages');
-    if (!input || !send || !messages) return;
-    function addBotMessage(text) {
+(function() {
+  var input = document.getElementById('chatbot-input');
+  var sendBtn = document.getElementById('chatbot-send');
+  var attachBtn = document.getElementById('chatbot-attach');
+  var fileInput = document.getElementById('chatbot-image-input');
+  var previewEl = document.getElementById('chatbot-image-preview');
+  var messages = document.getElementById('chatbot-messages');
+  if (!input || !sendBtn || !messages) return;
+
+  var conversationId = 'pest-health-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+  var pendingImageBase64 = null;
+
+  function t(key, mod) { return (window.i18n && window.i18n.t(key, mod || 'chatbot')) || key; }
+
+  function addBotMessage(text) {
+    var p = document.createElement('p');
+    p.className = 'chatbot-bot';
+    p.textContent = text;
+    messages.appendChild(p);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function addUserMessage(text, hasImage) {
+    var wrap = document.createElement('div');
+    wrap.className = 'chatbot-user';
+    if (text) {
       var p = document.createElement('p');
-      p.className = 'chatbot-bot';
+      p.style.margin = '0';
       p.textContent = text;
-      messages.appendChild(p);
+      wrap.appendChild(p);
     }
-    window.chatbot = {
-      isOpen: true,
-      addBotMessage: addBotMessage
-    };
-    function showGreeting() {
-      if (!window.i18n) return;
-      var name = (window.currentUser && window.currentUser.name) || window.i18n.t('farmer', 'common');
-      var greeting = window.i18n.t('greeting', 'chatbot', { name: name });
-      addBotMessage(greeting);
-      if (window.voiceHandler && window.voiceHandler.speak) {
-        window.voiceHandler.speak(greeting, window.i18n.getCurrentLanguage());
-      }
+    if (hasImage) {
+      var img = document.createElement('img');
+      img.className = 'chatbot-user-image';
+      img.src = pendingImageBase64 && pendingImageBase64.indexOf('data:') === 0 ? pendingImageBase64 : 'data:image/jpeg;base64,' + pendingImageBase64;
+      img.alt = 'Attached';
+      wrap.appendChild(img);
     }
-    var firstBot = messages.querySelector('.chatbot-bot');
-    if (firstBot && window.i18n) {
-      var name = (window.currentUser && window.currentUser.name) || window.i18n.t('farmer', 'common');
-      firstBot.textContent = window.i18n.t('greeting', 'chatbot', { name: name });
-    }
-    function addUserMessage(text) {
-      var p = document.createElement('p');
-      p.className = 'chatbot-user';
-      p.textContent = text;
-      messages.appendChild(p);
-    }
-    send.addEventListener('click', function() {
-      var text = (input.value || '').trim();
-      if (!text) return;
-      addUserMessage(text);
-      input.value = '';
-      sendChat(text);
+    messages.appendChild(wrap);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function setPreview(text) {
+    if (previewEl) previewEl.textContent = text || '';
+  }
+
+  function clearPendingImage() {
+    pendingImageBase64 = null;
+    setPreview('');
+    if (fileInput) fileInput.value = '';
+  }
+
+  if (attachBtn && fileInput) {
+    attachBtn.addEventListener('click', function() { fileInput.click(); });
+    fileInput.addEventListener('change', function() {
+      var f = fileInput.files && fileInput.files[0];
+      if (!f || !f.type.startsWith('image/')) return;
+      var r = new FileReader();
+      r.onload = function() {
+        var data = r.result;
+        if (typeof data === 'string' && data.indexOf('base64,') !== -1) {
+          pendingImageBase64 = data;
+        } else {
+          pendingImageBase64 = 'data:image/jpeg;base64,' + (typeof data === 'string' ? data : '');
+        }
+        setPreview(t('image_attached'));
+      };
+      r.readAsDataURL(f);
     });
-    input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
+  }
+
+  document.addEventListener('paste', function(e) {
+    var items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
         e.preventDefault();
-        var t = (input.value || '').trim();
-        if (!t) return;
-        addUserMessage(t);
-        input.value = '';
-        sendChat(t);
+        var file = items[i].getAsFile();
+        if (file) {
+          var r = new FileReader();
+          r.onload = function() {
+            pendingImageBase64 = r.result;
+            setPreview(t('image_attached'));
+          };
+          r.readAsDataURL(file);
+        }
+        break;
       }
-    });
-    function sendChat(text) {
-      addBotMessage(window.i18n ? window.i18n.t('analyzing', 'chatbot') : 'Analyzing...');
-      var lang = (window.i18n && window.i18n.getCurrentLanguage()) ? window.i18n.getCurrentLanguage() : 'hi';
-      fetch('/api/chatbot/message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept-Language': lang },
-        body: JSON.stringify({ message: text })
-      }).then(function(r) { return r.json(); }).then(function(data) {
-        var lastBot = messages.querySelectorAll('.chatbot-bot');
-        if (lastBot.length) lastBot[lastBot.length - 1].textContent = data.reply || '';
-      }).catch(function() {
-        var lastBot = messages.querySelectorAll('.chatbot-bot');
-        if (lastBot.length) lastBot[lastBot.length - 1].textContent = (window.i18n ? window.i18n.t('messages.error', 'common') : 'Error') + '. ' + (window.i18n ? window.i18n.t('messages.try_again', 'common') : 'Try again.');
-      });
     }
-    window.addEventListener('languageChanged', function() {
-      if (window.i18n) {
-        addBotMessage(window.i18n.t('language_switched', 'chatbot'));
-      }
+  });
+
+  function sendMessage() {
+    var text = (input.value || '').trim();
+    if (!text && !pendingImageBase64) return;
+
+    addUserMessage(text || t('request_photo'), !!pendingImageBase64);
+    input.value = '';
+
+    var imageToSend = pendingImageBase64;
+    clearPendingImage();
+
+    addBotMessage(t('analyzing'));
+
+    // Use same language as UI: logged-in farmer preference first, then i18n toggle (no new system)
+    var lang = (window.currentUser && window.currentUser.language) || (window.i18n && window.i18n.getCurrentLanguage()) || 'hi';
+    var payload = { message: text || '', conversation_id: conversationId };
+    if (imageToSend) {
+      payload.image_base64 = imageToSend.indexOf('base64,') !== -1 ? imageToSend.split('base64,')[1] : imageToSend;
+    }
+
+    fetch('/api/chatbot/message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept-Language': lang },
+      body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var botEls = messages.querySelectorAll('.chatbot-bot');
+      if (botEls.length) botEls[botEls.length - 1].textContent = data.reply || '';
+      messages.scrollTop = messages.scrollHeight;
+    })
+    .catch(function() {
+      var botEls = messages.querySelectorAll('.chatbot-bot');
+      if (botEls.length) botEls[botEls.length - 1].textContent = t('messages.error', 'common') + '. ' + t('messages.try_again', 'common');
     });
-  })();
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  var firstBot = messages.querySelector('.chatbot-bot');
+  if (firstBot && window.i18n) {
+    var name = (window.currentUser && window.currentUser.name) || window.i18n.t('farmer', 'common');
+    firstBot.textContent = window.i18n.t('greeting', 'chatbot', { name: name });
+  }
+
+  window.addEventListener('languageChanged', function() {
+    if (window.i18n) addBotMessage(window.i18n.t('language_switched', 'chatbot'));
+  });
+  window.chatbot = { addBotMessage: addBotMessage, isOpen: true };
+})();
 </script>
 {% endblock %}

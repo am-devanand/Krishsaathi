@@ -121,15 +121,19 @@ class TranslationManager {
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
       const module = el.getAttribute('data-i18n-module') || 'common';
-      el.textContent = this.t(key, module);
+      const translated = this.t(key, module);
+      // Only update when we have a real translation to avoid flashing keys (e.g. "app_name") before locale loads
+      if (translated !== key) el.textContent = translated;
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       const key = el.getAttribute('data-i18n-placeholder');
-      el.placeholder = this.t(key, 'common');
+      const translated = this.t(key, 'common');
+      if (translated !== key) el.placeholder = translated;
     });
     const titleKey = document.querySelector('meta[name="i18n-title"]')?.content;
     if (titleKey) {
-      document.title = this.t(titleKey, 'common');
+      const titleTranslated = this.t(titleKey, 'common');
+      if (titleTranslated !== titleKey) document.title = titleTranslated;
     }
   }
 

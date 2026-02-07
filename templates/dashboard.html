@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="page-title" data-i18n="title" data-i18n-module="dashboard">Dashboard</h1>
-<p id="dashboard-welcome">{{ t('welcome', 'dashboard', name=t('farmer', 'common')) }}</p>
+<p id="dashboard-welcome">{{ t('welcome', 'dashboard', name=welcome_name) }}</p>
 
 <div class="card">
   <h2 data-i18n="weather_card.title" data-i18n-module="dashboard">Weather</h2>
@@ -49,8 +49,9 @@
 <div class="card">
   <h2 data-i18n="quick_actions.voice" data-i18n-module="dashboard">Quick actions</h2>
   <button type="button" class="btn btn--primary" id="dashboard-voice-btn" data-i18n="navigation.voice" data-i18n-module="common">Voice</button>
-  <a href="{{ url_for('chatbot_page') }}" class="btn btn--primary" data-i18n="quick_actions.pest" data-i18n-module="dashboard">Pest ID</a>
+  <a href="{{ url_for('chatbot_page') }}" class="btn btn--primary" data-i18n="quick_actions.pest" data-i18n-module="dashboard">Pest Health</a>
   <a href="#dashboard-schemes" class="btn btn--primary" data-i18n="quick_actions.schemes" data-i18n-module="dashboard">Schemes</a>
+  <div id="dashboard-voice-reply" class="dashboard-voice-reply" aria-live="polite" style="display: none;"></div>
 </div>
 {% endblock %}
 {% block scripts %}
@@ -60,19 +61,35 @@
     function updateWelcome() {
       var el = document.getElementById('dashboard-welcome');
       if (el && window.i18n) {
-        el.textContent = window.i18n.t('welcome', 'dashboard', { name: window.i18n.t('farmer', 'common') });
+        var name = (window.currentUser && window.currentUser.name) || window.i18n.t('farmer', 'common');
+        el.textContent = window.i18n.t('welcome', 'dashboard', { name: name });
       }
     }
     window.addEventListener('languageChanged', updateWelcome);
     var voiceBtn = document.getElementById('dashboard-voice-btn');
+    var voiceReplyEl = document.getElementById('dashboard-voice-reply');
     if (voiceBtn && window.voiceHandler) {
       voiceBtn.addEventListener('click', function() {
         window.voiceHandler.start(
           function(text) {
-            if (text && window.i18n) {
-              var msg = window.i18n.t('chatbot.listening', 'chatbot') || 'Heard: ';
-              alert(msg + ' ' + text);
+            if (!text || !text.trim()) return;
+            var lang = (window.currentUser && window.currentUser.language) || (window.i18n && window.i18n.getCurrentLanguage()) || 'hi';
+            if (voiceReplyEl) {
+              voiceReplyEl.style.display = 'block';
+              voiceReplyEl.innerHTML = '<p class="dashboard-loading">' + (window.i18n ? window.i18n.t('analyzing', 'chatbot') : 'Analyzing...') + '</p>';
             }
+            fetch('/api/chatbot/message', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Accept-Language': lang },
+              body: JSON.stringify({ message: text.trim() })
+            }).then(function(r) { return r.json(); }).then(function(data) {
+              if (voiceReplyEl) {
+                voiceReplyEl.innerHTML = '<p class="dashboard-voice-reply__label">' + (window.i18n ? window.i18n.t('chatbot.listening', 'chatbot') : 'Heard') + ': ' + text.trim() + '</p><p class="dashboard-voice-reply__text">' + (data.reply || '') + '</p>';
+                voiceReplyEl.classList.add('dashboard-voice-reply--visible');
+              }
+            }).catch(function() {
+              if (voiceReplyEl) voiceReplyEl.innerHTML = '<p class="dashboard-error">' + (window.i18n ? window.i18n.t('messages.error', 'common') : 'Error') + '</p>';
+            });
           },
           function(err) {
             if (window.i18n) alert(window.i18n.t('messages.error', 'common') + ': ' + (err.message || err));

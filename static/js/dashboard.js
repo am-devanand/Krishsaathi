@@ -39,6 +39,30 @@
       }
       html += parts.join(' | ') + '</p>';
     }
+    /* Alerts strip: separate rainfall, heat, cold, storm visually (non-blocking) */
+    var cur = data && data.current;
+    if (cur) {
+      var cond = (cur.condition || '').toLowerCase();
+      var temp = cur.temperature;
+      var alertClass = '';
+      var alertMsg = '';
+      if (cond === 'stormy') {
+        alertClass = 'dashboard-alert--storm';
+        alertMsg = t('weather_alert.stormy', 'common');
+      } else if (cond === 'rainy') {
+        alertClass = 'dashboard-alert--rain';
+        alertMsg = t('weather_alert.rainy', 'common');
+      } else if (temp != null && temp >= 43) {
+        alertClass = 'dashboard-alert--heat';
+        alertMsg = t('weather_alert.extreme_heat', 'common');
+      } else if (temp != null && temp <= 1) {
+        alertClass = 'dashboard-alert--cold';
+        alertMsg = t('weather_alert.extreme_cold', 'common');
+      }
+      if (alertClass && alertMsg) {
+        html += '<div class="dashboard-alert ' + alertClass + '">' + alertMsg + '</div>';
+      }
+    }
     if (data && data.error) {
       html = '<p class="dashboard-error">' + (t('messages.error', 'common') || 'Error') + ': ' + data.error + '</p>';
     }
@@ -46,6 +70,7 @@
     showWeatherAlertIfBad(data);
   }
 
+  /* Reduced false positives: stricter thresholds (43° heat, 1° cold) before showing blocking alert */
   function showWeatherAlertIfBad(data) {
     if (!data || !data.current) return;
     try {
@@ -61,9 +86,9 @@
       msg = t('weather_alert.stormy', 'common');
     } else if (cond === 'rainy') {
       msg = t('weather_alert.rainy', 'common');
-    } else if (temp != null && temp >= 42) {
+    } else if (temp != null && temp >= 43) {
       msg = t('weather_alert.extreme_heat', 'common');
-    } else if (temp != null && temp <= 2) {
+    } else if (temp != null && temp <= 1) {
       msg = t('weather_alert.extreme_cold', 'common');
     }
     if (msg) {
@@ -118,9 +143,21 @@
 
   function renderAdvisory(data, container) {
     if (!container) return;
+    var t = window.i18n ? window.i18n.t.bind(window.i18n) : function (k) { return k; };
+    var items = (data && data.items) || [];
     var text = (data && data.text) || '';
     var soilTip = (data && data.soil_tip) || '';
-    var t = window.i18n ? window.i18n.t.bind(window.i18n) : function (k) { return k; };
+    var trendNote = (data && data.weather_trend_note) || '';
+    if (items.length > 0) {
+      var html = '<ul class="advisory-list" style="margin:0;padding-left:1.2rem;">';
+      for (var i = 0; i < items.length; i++) {
+        html += '<li style="margin-bottom:8px;">' + items[i] + '</li>';
+      }
+      html += '</ul>';
+      if (trendNote) html += '<p class="soil-tip" style="margin-top:12px;font-size:0.85rem;">' + trendNote + '</p>';
+      container.innerHTML = html;
+      return;
+    }
     if (!text && !soilTip) {
       container.innerHTML = '<p>' + (t('advisory_card.no_advisory', 'dashboard') || 'No advisory for today') + '</p>';
       return;

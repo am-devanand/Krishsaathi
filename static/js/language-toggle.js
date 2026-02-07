@@ -66,8 +66,10 @@
     const currentCode = i18n.getCurrentLanguage();
     const currentEntry = list.find(function (e) { return e.code === currentCode; }) || list[0];
 
-    const selectLabel = i18n.t('language.select', 'common');
-    const searchPlaceholder = i18n.t('language.search_placeholder', 'common');
+    const selectLabelRaw = i18n.t('language.select', 'common');
+    const selectLabel = (selectLabelRaw && selectLabelRaw !== 'language.select') ? selectLabelRaw : 'Select Language';
+    const searchPlaceholderRaw = i18n.t('language.search_placeholder', 'common');
+    const searchPlaceholder = (searchPlaceholderRaw && searchPlaceholderRaw !== 'language.search_placeholder') ? searchPlaceholderRaw : 'Search languages...';
 
     root.innerHTML = renderButton(currentEntry, selectLabel) + renderDropdown(searchPlaceholder, selectLabel);
 
