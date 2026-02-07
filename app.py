@@ -33,6 +33,18 @@ app = Flask(
     template_folder='templates',
 )
 app.config.from_object('config')
+
+# Vercel (and similar): filesystem is read-only except /tmp
+if os.environ.get('VERCEL'):
+    app.instance_path = '/tmp/krishsaathi_instance'
+    os.makedirs(app.instance_path, exist_ok=True)
+else:
+    try:
+        os.makedirs(app.instance_path, exist_ok=True)
+    except OSError:
+        app.instance_path = os.path.join(os.environ.get('TMPDIR', '/tmp'), 'krishsaathi_instance')
+        os.makedirs(app.instance_path, exist_ok=True)
+
 db.init_app(app)
 
 SESSION_FARMER_ID = 'farmer_id'
