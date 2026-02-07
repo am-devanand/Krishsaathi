@@ -3,8 +3,10 @@
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / '.env')
 
 # Supported languages (15 major Indian languages + English)
 # ISO 639-1 codes, native name, script
@@ -68,6 +70,12 @@ if DATABASE_URL.startswith('postgres://'):
     DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
 SQLALCHEMY_DATABASE_URI = DATABASE_URL
 SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+# Google Gemini AI API Key
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+
+# OpenAI API Key (for GPT-4o)
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 
 # Indian states (code, name) for profile - major agricultural states
 INDIAN_STATES = [

@@ -42,13 +42,13 @@ def check_weather_and_alert(app):
                 msg = None
                 # Stricter thresholds to reduce false positives (aligned with dashboard)
                 if cond == "stormy":
-                    msg = "KrishiSaathi: Storm likely. Keep crops and yourself safe."
+                    msg = "KRISHSAATHI: Storm likely. Keep crops and yourself safe."
                 elif cond == "rainy":
-                    msg = "KrishiSaathi: Rain expected. Reduce irrigation, check drainage."
+                    msg = "KRISHSAATHI: Rain expected. Reduce irrigation, check drainage."
                 elif temp is not None and temp >= 43:
-                    msg = "KrishiSaathi: Extreme heat. Ensure water and shade for crops."
+                    msg = "KRISHSAATHI: Extreme heat. Ensure water and shade for crops."
                 elif temp is not None and temp <= 1:
-                    msg = "KrishiSaathi: Cold conditions. Protect sensitive crops."
+                    msg = "KRISHSAATHI: Cold conditions. Protect sensitive crops."
                 if msg:
                     send_sms(f.mobile, msg)
             except Exception as e:

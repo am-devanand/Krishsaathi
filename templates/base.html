@@ -1,23 +1,28 @@
 <!DOCTYPE html>
 <html lang="{{ current_language or 'hi' }}">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="i18n-title" content="app_name">
-  <title>KrishiSaathi</title>
+  <title>KRISHSAATHI</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/language-toggle.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/voice-assistant.css') }}">
 </head>
+
 <body lang="{{ current_language or 'hi' }}">
   <header class="app-header">
     <div class="app-header__brand">
-      <h1 data-i18n="app_name" data-i18n-module="common">KrishiSaathi</h1>
-      <p class="app-header__tagline" data-i18n="tagline" data-i18n-module="common">Your Farming Companion</p>
+      <h1 data-i18n="app_name" data-i18n-module="common">KRISHSAATHI</h1>
+      <p class="app-header__tagline" data-i18n="tagline" data-i18n-module="common">Connecting Farmers to Intelligence
+      </p>
     </div>
     <nav class="app-header__nav">
       <a href="{{ url_for('index') }}" data-i18n="navigation.home" data-i18n-module="common">Home</a>
       <a href="{{ url_for('dashboard') }}" data-i18n="navigation.analytics" data-i18n-module="common">Analytics</a>
-      <a href="{{ url_for('chatbot_page') }}" data-i18n="navigation.pest_health" data-i18n-module="common">Pest Health</a>
+      <a href="{{ url_for('chatbot_page') }}" data-i18n="navigation.pest_health" data-i18n-module="common">Pest
+        Health</a>
       {% if current_farmer %}
       <a href="{{ url_for('profile') }}" data-i18n="navigation.profile" data-i18n-module="common">Profile</a>
       <a href="{{ url_for('logout') }}" data-i18n="navigation.logout" data-i18n-module="common">Logout</a>
@@ -30,11 +35,11 @@
   <div class="language-toggle" aria-label="Language selector"></div>
   <script>
     window.currentUser = {% if current_farmer %}{
-      name: {{ (current_farmer.name or '')|tojson }},
-      language: {{ (current_farmer.language_code or 'hi')|tojson }},
-      district: {{ (current_farmer.district or '')|tojson }},
-      village: {{ (current_farmer.village or '')|tojson }}
-    }{% else %}null{% endif %};
+      name: { { (current_farmer.name or '')| tojson } },
+      language: { { (current_farmer.language_code or 'hi')| tojson } },
+      district: { { (current_farmer.district or '')| tojson } },
+      village: { { (current_farmer.village or '')| tojson } }
+    } {% else %} null{% endif %};
   </script>
 
   <main class="main">
@@ -49,8 +54,9 @@
   <script src="{{ url_for('static', filename='js/language-detector.js') }}"></script>
   <script src="{{ url_for('static', filename='js/font-loader.js') }}"></script>
   <script src="{{ url_for('static', filename='js/language-toggle.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/voice-assistant.js') }}"></script>
   <script>
-    (function() {
+    (function () {
       function whenReady() {
         if (window.i18n) window.i18n.applyTranslations();
         if (window.i18n && window.LocaleFormatter) {
@@ -67,7 +73,7 @@
       } else {
         whenReady();
       }
-      window.addEventListener('languageChanged', function(e) {
+      window.addEventListener('languageChanged', function (e) {
         if (window.LocaleFormatter) {
           window.formatter = new LocaleFormatter(e.detail.language);
         }
@@ -76,4 +82,5 @@
   </script>
   {% block scripts %}{% endblock %}
 </body>
+
 </html>

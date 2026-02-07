@@ -1,6 +1,6 @@
 {
-  "app_name": "KrishiSaathi",
-  "tagline": "Your Farming Companion",
+  "app_name": "KRISHSAATHI",
+  "tagline": "Connecting Farmers to Intelligence",
   "navigation": {
     "home": "Home",
     "voice": "Voice",
@@ -120,7 +120,7 @@
     "type_message": "Type message..."
   },
   "weather_alert": {
-    "title": "KrishiSaathi - Weather Alert",
+    "title": "KRISHSAATHI - Weather Alert",
     "stormy": "Storm likely. Keep crops and yourself safe.",
     "rainy": "Rain expected. Reduce irrigation, check drainage.",
     "extreme_heat": "Extreme heat. Ensure water and shade.",

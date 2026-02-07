@@ -1,4 +1,4 @@
-# KrishiSaathi - Main application
+# KRISHSAATHI - Main application
 # Enterprise-grade agricultural intelligence platform
 
 import os
@@ -25,7 +25,7 @@ from services.soil import get_soil_advisory
 from services.satellite import get_satellite_info
 from services.advisory import get_advisory
 from services.pest_health_ai import get_pest_health_reply
-from models import db, Farmer, FarmerCrop
+from models import db, Farmer, FarmerCrop, ChatSession, ChatMessage
 
 app = Flask(
     __name__,
@@ -221,10 +221,45 @@ def chatbot_message():
         user_lang = DEFAULT_LANGUAGE
     message = (data.get('message') or '').strip()
     image_base64 = data.get('image_base64') or None
-    conversation_id = data.get('conversation_id') or None
+    conversation_id = data.get('conversation_id')
+    farmer_id = farmer.id if farmer else None
+    
+    # History: Get or Create Session
+    session_id = None
+    if conversation_id:
+        chat_session = ChatSession.query.get(conversation_id)
+        if chat_session and (chat_session.farmer_id == farmer_id or (not farmer_id and chat_session.guest_id)):
+            session_id = chat_session.id
+    
+    if not session_id:
+        chat_session = ChatSession(farmer_id=farmer_id)
+        db.session.add(chat_session)
+        db.session.commit()
+        session_id = chat_session.id
+
+    # Save User Message
+    if message:
+        user_msg = ChatMessage(session_id=session_id, is_user=True, text=message, language_code=user_lang)
+        db.session.add(user_msg)
+        db.session.commit()
+
     farmer_name = get_farmer_display_name(farmer)
-    reply = get_pest_health_reply(message, user_lang, image_base64, conversation_id, farmer_name=farmer_name)
-    return jsonify({'reply': reply, 'language': user_lang})
+    reply = get_pest_health_reply(
+        message, 
+        user_lang, 
+        image_base64, 
+        conversation_id=session_id, 
+        farmer_name=farmer_name,
+        farmer_id=farmer_id
+    )
+    
+    # Save Bot Message
+    if reply:
+        bot_msg = ChatMessage(session_id=session_id, is_user=False, text=reply, language_code=user_lang)
+        db.session.add(bot_msg)
+        db.session.commit()
+        
+    return jsonify({'reply': reply, 'language': user_lang, 'conversation_id': session_id})
 
 
 @app.route('/api/chatbot/analyze-image', methods=['POST'])
@@ -237,7 +272,40 @@ def chatbot_analyze_image():
     image_base64 = data.get('image_base64') or data.get('image')
     reply = get_pest_health_reply('', user_lang, image_base64, data.get('conversation_id'), farmer_name=get_farmer_display_name(farmer))
     return jsonify({'reply': reply, 'language': user_lang})
-
+@app.route('/api/voice/history')
+def api_voice_history():
+    farmer = get_current_farmer()
+    # For now, only return history for logged-in users? 
+    # Or based on conversation_id passed in query param?
+    # Let's support both.
+    limit = 50
+    history = []
+    
+    cid = request.args.get('conversation_id')
+    if cid:
+        chat_session = ChatSession.query.get(cid)
+        if chat_session:
+            # Check ownership
+            if farmer and chat_session.farmer_id == farmer.id:
+                 history = chat_session.messages[-limit:]
+            elif not farmer and not chat_session.farmer_id:
+                 # Guest session access by ID
+                 history = chat_session.messages[-limit:]
+    elif farmer:
+        # Get most recent session
+        chat_session = ChatSession.query.filter_by(farmer_id=farmer.id).order_by(ChatSession.started_at.desc()).first()
+        if chat_session:
+             history = chat_session.messages[-limit:]
+             
+    out = []
+    for msg in history:
+        out.append({
+            'text': msg.text,
+            'is_user': msg.is_user,
+            'timestamp': msg.timestamp.isoformat()
+        })
+    
+    return jsonify({'history': out})
 
 # ---------- Real-time data APIs (use farmer district/state when logged in) ----------
 
