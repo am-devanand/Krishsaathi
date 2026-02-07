@@ -24,6 +24,7 @@ class Farmer(db.Model):
 
     crops: Mapped[list['FarmerCrop']] = relationship('FarmerCrop', back_populates='farmer', cascade='all, delete-orphan')
 
+
     def to_dict(self):
         return {
             'id': self.id,

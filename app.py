@@ -34,16 +34,24 @@ app = Flask(
 )
 app.config.from_object('config')
 
-# Vercel (and similar): filesystem is read-only except /tmp
-if os.environ.get('VERCEL'):
+# Serverless (Vercel etc.): default instance path is read-only. Use /tmp so db.init_app can create dirs/files.
+def _writable(path):
+    try:
+        os.makedirs(path, exist_ok=True)
+        f = os.path.join(path, '.write_check')
+        open(f, 'w').close()
+        os.remove(f)
+        return True
+    except (OSError, PermissionError):
+        return False
+
+if not _writable(app.instance_path):
     app.instance_path = '/tmp/krishsaathi_instance'
     os.makedirs(app.instance_path, exist_ok=True)
-else:
-    try:
-        os.makedirs(app.instance_path, exist_ok=True)
-    except OSError:
-        app.instance_path = os.path.join(os.environ.get('TMPDIR', '/tmp'), 'krishsaathi_instance')
-        os.makedirs(app.instance_path, exist_ok=True)
+
+# If using SQLite, put DB in writable instance path so serverless can open it
+if app.config.get('SQLALCHEMY_DATABASE_URI', '').startswith('sqlite'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'krishsaathi.db')
 
 db.init_app(app)
 
